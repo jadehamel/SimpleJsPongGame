@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pong Game</title>
+<style>
+    canvas {
+        border: 2px solid black;
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const paddleWidth = 10;
+    const paddleHeight = 80;
+    const ballRadius = 10;
+    const paddleSpeed = 5;
+    let leftPaddleY = canvas.height / 2 - paddleHeight / 2;
+    let rightPaddleY = canvas.height / 2 - paddleHeight / 2;
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height / 2;
+    let ballDX = 5;
+    let ballDY = 5;
+    let leftPaddleDY = 0;
+    let scoreLeft = 0;
+    let scoreRight = 0;
+    let gameOver = false;
+
+    function drawLeftPaddle() {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(0, leftPaddleY, paddleWidth, paddleHeight);
+    }
+
+    function drawRightPaddle() {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(canvas.width - paddleWidth, rightPaddleY, paddleWidth, paddleHeight);
+    }
+
+    function drawBall() {
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'black';
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawScores() {
+        ctx.fillStyle = 'black';
+        ctx.font = '24px Arial';
+        ctx.fillText('Left: ' + scoreLeft, 50, 30);
+        ctx.fillText('Right: ' + scoreRight, canvas.width - 150, 30);
+    }
+
+    function moveLeftPaddle() {
+        leftPaddleY += leftPaddleDY;
+        if (leftPaddleY < 0) {
+            leftPaddleY = 0;
+        } else if (leftPaddleY + paddleHeight > canvas.height) {
+            leftPaddleY = canvas.height - paddleHeight;
+        }
+    }
+
+    function moveRightPaddle() {
+        // AI-controlled paddle follows the ball
+        if (ballY < rightPaddleY + paddleHeight / 2) {
+            rightPaddleY -= paddleSpeed;
+        } else if (ballY > rightPaddleY + paddleHeight / 2) {
+            rightPaddleY += paddleSpeed;
+        }
+        if (rightPaddleY < 0) {
+            rightPaddleY = 0;
+        } else if (rightPaddleY + paddleHeight > canvas.height) {
+            rightPaddleY = canvas.height - paddleHeight;
+        }
+    }
+
+    function moveBall() {
+        ballX += ballDX;
+        ballY += ballDY;
+        // Ball collision with top and bottom walls
+        if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
+            ballDY = -ballDY;
+        }
+        // Ball collision with paddles
+        if ((ballX - ballRadius < paddleWidth && ballY > leftPaddleY && ballY < leftPaddleY + paddleHeight) ||
+            (ballX + ballRadius > canvas.width - paddleWidth && ballY > rightPaddleY && ballY < rightPaddleY + paddleHeight)) {
+            ballDX = -ballDX;
+        }
+        // Ball out of bounds
+        if (ballX - ballRadius < 0) {
+            gameOver = true;
+        } else if (ballX + ballRadius > canvas.width) {
+            scoreLeft++;
+            resetBall();
+        }
+    }
+
+    function resetBall() {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballDX = -ballDX;
+    }
+
+    function gameLoop() {
+        if (!gameOver) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawLeftPaddle();
+            drawRightPaddle();
+            drawBall();
+            drawScores();
+            moveLeftPaddle();
+            moveRightPaddle();
+            moveBall();
+            requestAnimationFrame(gameLoop);
+        } else {
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.fillText('Game Over! Press F5 to play again.', canvas.width / 2 - 200, canvas.height / 2);
+        }
+    }
+
+    document.addEventListener('keydown', event => {
+        if (event.code === 'ArrowUp') {
+            leftPaddleDY = -paddleSpeed;
+        } else if (event.code === 'ArrowDown') {
+            leftPaddleDY = paddleSpeed;
+        }
+    });
+
+    document.addEventListener('keyup', event => {
+        if (event.code === 'ArrowUp' || event.code === 'ArrowDown') {
+            leftPaddleDY = 0;
+        }
+    });
+
+    gameLoop();
+</script>
+</body>
+</html>
